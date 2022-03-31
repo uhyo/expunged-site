@@ -4,17 +4,24 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "eleventy",
-    "watch": "eleventy --serve"
+    "build:normal": "eleventy",
+    "build:secret": "SECRET=1 eleventy",
+    "build:worker": "esbuild --bundle --outfile=./dist/worker.js ./worker/index.js",
+    "watch:normal": "eleventy --serve",
+    "watch:secret": "SECRET=1 eleventy --serve",
+    "watch:worker": "miniflare dist/worker.js --watch"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@11ty/eleventy": "^1.0.0",
+    "esbuild": "^0.14.29",
+    "miniflare": "^2.3.0",
     "prettier": "^2.6.1"
   },
   "dependencies": {
+    "@tsndr/cloudflare-worker-jwt": "^1.1.6",
     "dotenv": "^16.0.0"
   }
 }

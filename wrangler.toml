@@ -1,0 +1,14 @@
+name = "esbuild-worker"
+type = "javascript"
+account_id = ""
+workers_dev = true
+route = ""
+zone_id = ""
+
+[build]
+command = "npm run build:worker"
+[build.upload]
+format = "service-worker"
+
+[miniflare]
+build_watch_dirs=["worker"]
