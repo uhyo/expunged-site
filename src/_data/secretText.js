@@ -6,6 +6,7 @@ module.exports = () => {
 };
 
 function loadSecretData() {
+  const { SEPARATOR = "\n" } = process.env;
   const chunks = [];
   for (let i = 1; ; i++) {
     const chunk = process.env[`TEXT${i}`];
@@ -15,5 +16,5 @@ function loadSecretData() {
       break;
     }
   }
-  return chunks.join("\n").split("\n");
+  return chunks.join(SEPARATOR).split(SEPARATOR);
 }

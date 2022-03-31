@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build:site": "npm run build:normal && npm run build:secret",
     "build:normal": "eleventy",
     "build:secret": "SECRET=1 eleventy",
     "build:worker": "esbuild --bundle --outfile=./dist/worker.js ./worker/index.js",
