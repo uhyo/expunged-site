@@ -5,15 +5,20 @@ module.exports = (eleventyConfig) => {
   const counter = new KeyedCounter(0);
 
   eleventyConfig.setUseGitIgnore(false);
+  eleventyConfig.setBrowserSyncConfig({
+    socket: {
+      domain: "localhost:8080",
+    },
+  });
   eleventyConfig.addWatchTarget(".env");
 
   eleventyConfig.addShortcode("expunged", function () {
     const cnt = counter.increment(this.page.date);
     const text = this.ctx.secretText[cnt] || "";
     if (SECRET) {
-      return text;
+      return `<span class="revealed">${text}</span>`;
     } else {
-      return "█".repeat([...text].length);
+      return `<s class="expunged">${"█".repeat([...text].length)}</s>`;
     }
   });
 

@@ -7,6 +7,18 @@ title: [DATA EXPUNGED]
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }}</title>
+    <style>
+      pre {
+        font-family: monospace;
+        background-color: #f3f3f3;
+      }
+      code {
+        font-size: 0.9rem;
+      }
+      span.revealed {
+        color: blue;
+      }
+    </style>
   </head>
   <body>
     {{ content | safe }}

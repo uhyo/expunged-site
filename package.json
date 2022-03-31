@@ -7,8 +7,8 @@
     "build:normal": "eleventy",
     "build:secret": "SECRET=1 eleventy",
     "build:worker": "esbuild --bundle --outfile=./dist/worker.js ./worker/index.js",
-    "watch:normal": "eleventy --serve",
-    "watch:secret": "SECRET=1 eleventy --serve",
+    "watch:normal": "eleventy --serve --port=8080",
+    "watch:secret": "SECRET=1 eleventy --serve --port=8081",
     "watch:worker": "miniflare dist/worker.js --watch"
   },
   "keywords": [],

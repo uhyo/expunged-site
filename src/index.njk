@@ -5,5 +5,133 @@ layout: layout.njk
 <h1>Cloudflare PagesとCloudflare Workersで{% expunged %}された{% expunged %}を作る</h1>
 
 <p>みなさん{% expunged %}。みなさんは、許可した人にだけ{% expunged %}けどそれ以外の人にも{% expunged %}を{% expunged %}して{% expunged %}たいと思ったことがあるのではないでしょうか。</p>
+<p>この記事では、そのような機構をCloudflareで実現してみたのでご紹介します。{% expunged %}以外は全部コードが公開されており、皆さんも簡単に自分でこのような{% expunged %}を作ってCloudflareにデプロイすることができます。</p>
+<p>この記事の末尾には、{% expunged %}可能なトークンを用意してあります。<a href="TODO">デモサイト</a>にアクセスしてトークンを入力してみてください。</p>
 
-<p>この記事では、そのような機構をCloudflareで実現してみたのでご紹介します。{% expunged %}以外は全部コードが公開されており、皆さんも自分でこのような{% expunged %}を作ってCloudflareにデプロイすることができます。</p>
+<h2>仕組み</h2>
+<p>まず、サイト自体は静的サイトジェネレーターである{% expunged %}を用いて作成します。このとき、{% expunged %}がされたバージョンとされていないバージョンの2種類のアウトプットを用意し、後者は<code>/__secret__</code>以下に{% expunged %}します。</p>
+
+<p>このサイトは普通にCloudflare Pagesにデプロイしますが、その前段にCloudflare Workerを配置します。これにより、このサイトへの{% expunged %}は全てワーカーを経由するようになります。</p> 
+
+<p>お察しの通り、このワーカーが{% expunged %}されたサイトと{% expunged %}されていないサイトの{% expunged %}を行います。ワーカーは{% expunged %}として渡されたトークンを見て{% expunged %}の{% expunged %}があるかどうか判断します。トークンとしては、今回は簡単に扱える{% expunged %}を採用しました。簡単な{% expunged %}である割に、{% expunged %}などの仕組みが組み込まれており便利です。</p>
+
+<p>ワーカーは基本的には{% expunged %}（Cloudflare Pages）への{% expunged %}として振る舞いますが、有効なトークンが与えられたときは{% expunged %}を修正し<code>/__secret__</code>を付加します。こうすることで、有効なトークンが与えられた場合は{% expunged %}されたページを返すことができます。
+
+<p>以下では、各部分について解説します。</p>
+
+<h2>静的サイトのビルドとデプロイ</h2>
+
+<p>上述のように、静的サイトジェネレータとしては{% expunged %}を使用し、それでビルドされたサイトをCloudflare Pagesにデプロイします。このとき、いくつかの{% expunged %}があります。1つは{% expunged %}の管理、もう1つは文章の{% expunged %}です。</p>
+
+<h3>{% expunged %}での{% expunged %}読み込み</h3>
+
+<p>まず1つ目については、サイトの趣旨上、{% expunged %}はリポジトリに含めたくありません。しかし、{% expunged %}版サイトのビルドもCloudflareのビルドノード上で行われるため、{% expunged %}は{% expunged %}としてCloudflare Pagesに与えられる必要があります。</p>
+<p>その具体的な方法は{% expunged %}です。そのため、{% expunged %}の中身も{% expunged %}として与えやすい形で管理する必要があります。実際には、このシステムでは`.env`ファイルに次のような形で、1つの変数に複数の{% expunged %}が1行1個の形で管理されています。</p>
+
+<pre><code>
+TEXT1="
+こんにちは
+情報を見せたい
+断片的な文書
+公開
+"
+</code></pre>
+
+<p>これを読み込む側は次のようにします。環境変数も{% expunged %}では{% expunged %}として扱うのがよいでしょう。上のような{% expunged %}の文字列はこのファイルで配列に変換されます。</p>
+
+<pre><code>
+// src/_data_secretText.js
+const dotenv = require("dotenv");
+
+module.exports = () => {
+  dotenv.config({ override: true });
+  return loadSecretData();
+};
+
+function loadSecretData() {
+  const chunks = [];
+  for (let i = 1; ; i++) {
+    const chunk = process.env[`TEXT${i}`];
+    if (chunk !== undefined) {
+      chunks.push(chunk.trim());
+    } else {
+      break;
+    }
+  }
+  return chunks.join("\n").split("\n");
+}
+</pre></code>
+
+<p>コードをよく読むと分かるように、{% expunged %}は<code>TEXT1</code>, <code>TEXT2</code>, ……のように{% expunged %}することができます。これは一つの{% expunged %}の長さには制限があるため、それを克服するためです。</p>
+
+<h3>{% expunged %}での利用</h3>
+
+<p>では、このデータを使う側はどのようにするのでしょうか。</p>
+
+<p>今回のサンプルではテンプレートエンジンとして{% expunged %}を使っていますが、文書の{% expunged %}は次のような具合です。
+
+<pre><code>
+{% raw %} &lt;p&gt;みなさん{% expunged %}。みなさんは、許可した人にだけ{% expunged %}けどそれ以外の人にも{% expunged %}を{% expunged %}して{% expunged %}たいと思ったことがあるのではないでしょうか。&lt;/p&gt;{% endraw %}
+</code></pre>
+
+<p>このように、{% expunged %}は{% raw %}{% expunged %}{% endraw %}として表現します。一般の{% expunged %}などではそれぞれの箇所に{% expunged %}が必要になるところですが、今回は極力{% expunged %}にするために{% expunged %}は廃しました。お察しの通り、前述のデータが{% expunged %}に{% expunged %}形になります。</p>
+
+<p>{% raw %}{% expunged %}{% endraw %}の実装は{% expunged %}に書くことができます。</p>
+
+<pre><code>
+  eleventyConfig.addShortcode("expunged", function () {
+    const cnt = counter.increment(this.page.date);
+    const text = this.ctx.secretText[cnt] || "";
+    if (SECRET) {
+      return text;
+    } else {
+      return "█".repeat([...text].length);
+    }
+  });
+</code></pre>
+
+<p>ただしcounterというのは次のKeyedCounterクラスのインスタンスです。</p>
+
+<pre><code>
+class KeyedCounter {
+  currentKey;
+  count = 0;
+  initialValue;
+  constructor(initialValue) {
+    this.initialValue = initialValue;
+    this.count = initialValue;
+  }
+  increment(key) {
+    if (this.currentKey !== key) {
+      this.count = this.initialValue;
+      this.currentKey = key;
+    }
+    return this.count++;
+  }
+}
+</code></pre>
+
+<p>このように、実装は現在{% expunged %}かどうかを判断し、それに応じて生の{% expunged %}を描画するか{% expunged %}を描画するかを決めます。後者の場合も文字数だけは開示するようにしています。</p>
+<p>前述のように、{% expunged %}は{% expunged %}で表現しています。この場合、{% expunged %}という問題がありますが、それに対処できるように仕組みを修正するのは{% expunged %}ので、{% expunged %}とします。</p>
+<p>また、コードでは<code>this.page.date</code>が参照されており、これが変わると{% expunged %}が{% expunged %}されます。これは、{% expunged %}を{% expunged %}で使用する際もこの仕組みが正しく動作するために必要です。<code>this.page.date</code>は{% expunged %}であり、これが変わったら{% expunged %}することで、再ビルド時も結果が正しくなります。
+
+<h2>Cloudflare Workersの実装</h2>
+
+<p>こちらは{% expunged %}。概要は前述の通りで、{% expunged %}らしいものは{% expunged %}くらいです。{% expunged %}は{% expunged %}していますので、詳細は{% expunged %}。</p>
+<p>ワーカーは{% expunged %}である必要があるようですが、公式ではそのために{% expunged %}を用いて{% expunged %}することが推奨されています。Cloudflare Workersのエミュレータであるminiflareでも、watchモードで{% expunged %}時に{% expunged %}できるようになっており、{% expunged %}と相性のいいワークフローになっています。</p>
+
+<h2>{% expunged %}</h2>
+
+<p>この記事では、Cloudflareのスタックを用いて{% expunged %}を作成する方法をご紹介しました。これまでのネタとは異なり、今回は{% expunged %}により{% expunged %}できる造りになっています。{% expunged %}以外は下記の{% expunged %}で全て見ることができますので、みなさんも自分の{% expunged %}を作ってみましょう。今回はデモサイトのみを用意しましたが、筆者は将来的には自身のウェブサイト uhy.ooo にこれを導入しようかなと思っています。</p>
+
+<p><a href="https://github.com/uhyo/expunged-site">GitHub</a></p>
+
+<hr>
+
+<h2>アクセスコード入力</h2>
+<p>秘密のトークンを持っていますか？　こちらに入力してください。</p>
+<form action="/" method="get">
+  <input type="text" name="token" value="">
+  <input type="submit" value="送信">
+</form>
+</p>
