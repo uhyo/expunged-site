@@ -11,17 +11,17 @@ layout: layout.njk
 <h2>仕組み</h2>
 <p>まず、サイト自体は静的サイトジェネレーターである{% expunged %}を用いて作成します。このとき、{% expunged %}がされたバージョンとされていないバージョンの2種類のアウトプットを用意し、後者は<code>/__secret__</code>以下に{% expunged %}します。</p>
 
-<p>このサイトは普通にCloudflare Pagesにデプロイしますが、その前段にCloudflare Workerを配置します。これにより、このサイトへの{% expunged %}は全てワーカーを経由するようになります。</p> 
+<p>このサイトは普通にCloudflare Pagesにデプロイしますが、その前段にCloudflare Workerを配置し、そちらのURLを{% expunged %}します。これにより、このサイトへの{% expunged %}は全てワーカーを経由するようになります。</p> 
 
 <p>お察しの通り、このワーカーが{% expunged %}されたサイトと{% expunged %}されていないサイトの{% expunged %}を行います。ワーカーは{% expunged %}として渡されたトークンを見て{% expunged %}の{% expunged %}があるかどうか判断します。トークンとしては、今回は簡単に扱える{% expunged %}を採用しました。簡単な{% expunged %}である割に、{% expunged %}などの仕組みが組み込まれており便利です。</p>
 
-<p>ワーカーは基本的には{% expunged %}（Cloudflare Pages）への{% expunged %}として振る舞いますが、有効なトークンが与えられたときは{% expunged %}を修正し<code>/__secret__</code>を付加します。こうすることで、有効なトークンが与えられた場合は{% expunged %}されたページを返すことができます。
+<p>ワーカーは基本的には{% expunged %}（Cloudflare Pages）への{% expunged %}として振る舞いますが、有効なトークンが与えられたときは{% expunged %}を修正し<code>/__secret__</code>を付加します。こうすることで、有効なトークンが与えられた場合は{% expunged %}されたページを返すことができます。直接閲覧されないように、<code>/__secret__</code>で始まるURLにアクセスした人は{% expunged %}します。</p>
 
 <p>以下では、各部分について解説します。</p>
 
 <h2>静的サイトのビルドとデプロイ</h2>
 
-<p>上述のように、静的サイトジェネレータとしては{% expunged %}を使用し、それでビルドされたサイトをCloudflare Pagesにデプロイします。このとき、いくつかの{% expunged %}があります。1つは{% expunged %}の管理、もう1つは文章の{% expunged %}です。</p>
+<p>上述のように、静的サイトジェネレータとしては{% expunged %}を使用し、それでビルドされたサイトをCloudflare Pagesにデプロイします。このとき、いくつかの{% expunged %}があります。1つは{% expunged %}の維持、もう1つは文章の{% expunged %}の管理です。</p>
 
 <h3>{% expunged %}での{% expunged %}読み込み</h3>
 
@@ -37,7 +37,7 @@ TEXT1="
 "
 </code></pre>
 
-<p>これを読み込む側は次のようにします。環境変数も{% expunged %}では{% expunged %}として扱うのがよいでしょう。上のような{% expunged %}の文字列はこのファイルで配列に変換されます。</p>
+<p>これを読み込む側は次のようにします。環境変数も{% expunged %}では{% expunged %}として扱うのがよいでしょう。上のような{% expunged %}の文字列はこのファイルで配列に変換されます。後述しますが、Cloudflareのダッシュボード上では残念ながら{% expunged %}ため、SEPARATORを別の文字に変えられる仕組みになっています。</p>
 
 <pre><code>
 // src/_data_secretText.js
@@ -49,6 +49,7 @@ module.exports = () => {
 };
 
 function loadSecretData() {
+  const { SEPARATOR = "\n" } = process.env;
   const chunks = [];
   for (let i = 1; ; i++) {
     const chunk = process.env[`TEXT${i}`];
@@ -58,7 +59,7 @@ function loadSecretData() {
       break;
     }
   }
-  return chunks.join("\n").split("\n");
+  return chunks.join(SEPARATOR).split(SEPARATOR);
 }
 </pre></code>
 
@@ -83,9 +84,9 @@ function loadSecretData() {
     const cnt = counter.increment(this.page.date);
     const text = this.ctx.secretText[cnt] || "";
     if (SECRET) {
-      return text;
+      return `&lt;span class="revealed"&gt;${text}&lt;/span&gt;`;
     } else {
-      return "█".repeat([...text].length);
+      return `&lt;s class="expunged"&gt;${"█".repeat([...text].length)}&lt;/s&gt;`;
     }
   });
 </code></pre>
