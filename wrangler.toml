@@ -1,4 +1,5 @@
-name = "esbuild-worker"
+compatibility_date = "2022-03-31"
+name = "expunged-site"
 type = "javascript"
 account_id = ""
 workers_dev = true
@@ -10,5 +11,12 @@ command = "npm run build:worker"
 [build.upload]
 format = "service-worker"
 
+
 [miniflare]
 build_watch_dirs=["worker"]
+
+[vars]
+ORIGIN = "https://expunged-site.pages.dev"
+
+# [secret]
+# SECRET 

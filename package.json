@@ -2,7 +2,7 @@
   "name": "expunged-site",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/worker.js",
   "scripts": {
     "build:site": "npm run build:normal && npm run build:secret",
     "build:normal": "eleventy",
@@ -17,6 +17,7 @@
   "license": "ISC",
   "devDependencies": {
     "@11ty/eleventy": "^1.0.0",
+    "@cloudflare/wrangler": "^1.19.11",
     "esbuild": "^0.14.29",
     "miniflare": "^2.3.0",
     "prettier": "^2.6.1"
